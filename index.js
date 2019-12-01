@@ -16,7 +16,7 @@ const encodeQuery = obj => {
 
 const encodeBlob = blob => {
   if (blob[0] === '/') blob = blob.substring(1);
-  if (blob[blob.length - 1] === '/') blob = blob.substring(0, blob.length - 2);
+  if (blob[blob.length - 1] === '/') blob = blob.substring(0, blob.length - 1);
   return blob;
 };
 

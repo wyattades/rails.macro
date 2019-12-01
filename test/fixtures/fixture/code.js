@@ -65,5 +65,5 @@ test('glob patterns', () => {
   expect(() => Routes.wild_c_path()).toThrow(/Missing required parameter/);
 
   expect(Routes.wild_a_path({ blob: 'foo/bar' })).toBe('/wild/foo/bar');
-  expect(Routes.wild_a_path({ blob: '/foo/bar' })).toBe('/wild/foo/bar');
+  expect(Routes.wild_a_path({ blob: '/foo/bar/' })).toBe('/wild/foo/bar');
 });
