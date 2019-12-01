@@ -1,0 +1,22 @@
+{
+  "name": "rails-routes-macro",
+  "keywords": [
+    "babel-plugin-macros",
+    "rails",
+    "routes",
+    "macro"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "test": "rm -rf test/fixtures/*/output.js && BABEL_ENV=test jest ./test/index.test.js && jest --testMatch '<rootDir>/test/fixtures/**/output.js'"
+  },
+  "peerDependencies": {
+    "babel-plugin-macros": "^2.7.1"
+  },
+  "devDependencies": {
+    "@types/babel-plugin-macros": "^2.6.0",
+    "babel-plugin-macros": "^2.7.1",
+    "babel-plugin-tester": "^8.0.0",
+    "jest": "^24.9.0"
+  }
+}
