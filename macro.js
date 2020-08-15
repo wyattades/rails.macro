@@ -41,19 +41,17 @@ const loadRoutes = (projectDir, noCache) => {
     () => {
       console.log('Reloading rails routes...');
       try {
-        const rawJson = execSync(
+        return execSync(
           `bundle exec rails runner ${path.resolve(
             __dirname,
             'get_routes.rb'
           )}`,
           {
-            cwd: projectDir
+            cwd: projectDir,
           }
         )
           .toString()
           .trim();
-
-        return rawJson;
       } catch (err) {
         console.error('Failed to load Rails routes!');
         throw err;
@@ -142,9 +140,11 @@ module.exports = createMacro(
       // each of the routes we use. This let's us declare a route's AST
       // once at the root of the source file so we aren't declaring a bunch
       // of new objects every time we call .getPath or .getUrl
-      babel.template(`${packageUid.name}.registerRoutes(ROUTES, HOST);`)({
+      babel.template(
+        `${packageUid.name}.registerRoutes(ROUTES, { host: HOST });`
+      )({
         ROUTES: T.valueToNode(objSlice(routes, [...routesToRegister])),
-        HOST: config.host ? T.stringLiteral(config.host) : T.nullLiteral()
+        HOST: config.host ? T.stringLiteral(config.host) : T.nullLiteral(),
       })
     );
   },

@@ -1,8 +1,7 @@
 // Cache all the ASTs for the routes we use in this object
 const routes = {};
 
-// URL base (used in `.getUrl`)
-let host;
+let config = {};
 
 const encodeQuery = obj => {
   const parts = [];
@@ -50,14 +49,16 @@ const formatRoute = (parts, params, routeName = null) => {
   return [newParts.join(''), usedParams];
 };
 
-exports.registerRoutes = (_routes, _host) => {
-  Object.assign(routes, _routes);
-  if (_host) host = _host;
+exports.registerRoutes = (nRoutes, nConfig) => {
+  Object.assign(routes, nRoutes);
+  if (nConfig) config = nConfig;
 };
 
 exports.getPath = (name, params) => {
-  if (params && typeof params !== 'object') params = { id: params };
-  else params = { ...(params || {}) };
+  if (params != null) {
+    if (typeof params === 'object') params = { ...params };
+    else params = { id: params };
+  } else params = {};
 
   const routeConfig = routes[name];
   if (!routeConfig) throw new Error(`Route not found: ${name}`);
@@ -80,7 +81,7 @@ exports.getPath = (name, params) => {
 
 exports.getUrl = (name, params) => {
   const urlHost =
-    host || (typeof window !== 'undefined' && window.location.origin);
+    config.host || (typeof window !== 'undefined' && window.location.origin);
 
   if (!urlHost)
     throw new Error(
