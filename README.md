@@ -88,15 +88,23 @@ You can configure `rails.macro` by providing options to the
 
 ### Config Options
 
-| Name     | Default         | Description                                                                        |
-| -------- | --------------- | ---------------------------------------------------------------------------------- |
-| host     | `undefined`     | Default url host used by `Routes.<routeName>_url` methods e.g. https://example.com |
-| railsDir | `process.cwd()` | Path to the rails project directory you want to read routes from                   |
-| cache    | `true`          | Cache the parsed `routes.rb` results to speed up consecutive builds                |
+| Name     | Default         | Description                                                                           |
+| -------- | --------------- | ------------------------------------------------------------------------------------- |
+| host     | `undefined`     | Default url host used by `Routes.<routeName>_url` methods e.g. https://example.com    |
+| railsDir | `process.cwd()` | Path to the rails project directory you want to read routes from                      |
+| cache    | `true`          | Cache the parsed `routes.rb` results in the filesystem to speed up consecutive builds |
 
 ## Re-evaluating on change
 
 For now, you must restart your dev-server if you change the Rails routes in `config/routes.rb`. A `watch` option may be considered in the future.
+
+## Disclaimer
+
+This library has only been tested with Rails 6.0.3 and uses internal Rails APIs that are subject to change.
+
+This library allows you to expose Rails route definitions to frontend code, which may create potential security concerns if you rely on route secrecy.
+
+⚠️ Use in production at your own risk! ⚠️
 
 ## License
 
