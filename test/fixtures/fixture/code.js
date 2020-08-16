@@ -1,4 +1,4 @@
-import Routes from '../../../macro';
+import { Routes } from '../../../macro';
 
 test('static path', () => {
   expect(Routes.things_path()).toBe('/things');

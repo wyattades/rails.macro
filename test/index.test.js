@@ -8,14 +8,14 @@ const testLines = (title, error, src) =>
     .trim()
     .split('\n')
     .map((code, i) => ({
-      code: `import Routes from '../../macro';\n${code};`,
+      code: `import { Routes } from '../../macro';\n${code};`,
       babelOptions: {
         cwd: path.join(__dirname, 'server'),
-        filename: path.join(__dirname, `server/__fake__.js`)
+        filename: path.join(__dirname, `server/__fake__.js`),
       },
       title,
       snapshot: false,
-      error
+      error,
     }));
 
 const fixturesDir = path.resolve(__dirname, 'fixtures');
@@ -23,14 +23,14 @@ const fixturesDir = path.resolve(__dirname, 'fixtures');
 pluginTester.default({
   plugin: babelPluginMacros,
   pluginOptions: {
-    railsRoutesMacro: {
+    railsMacro: {
       host: 'http://example.com',
-      cache: false
-    }
+      cache: false, // disable cache for tests
+    },
   },
   snapshot: true,
   babelOptions: {
-    cwd: path.join(__dirname, 'server')
+    cwd: path.join(__dirname, 'server'),
   },
   fixtures: path.join(__dirname, 'fixtures'),
   tests: [
@@ -49,6 +49,6 @@ pluginTester.default({
   Routes.thing_path;
   Routes['thing_url']();
   `
-    )
-  ]
+    ),
+  ],
 });

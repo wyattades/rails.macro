@@ -7,6 +7,4 @@ type RouteFnOptions =
 
 type RouteFn = (options?: RouteFnOptions) => string;
 
-const Routes: Record<string, RouteFn>;
-
-export default Routes;
+export const Routes: Record<string, RouteFn>;

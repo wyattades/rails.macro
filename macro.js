@@ -3,11 +3,15 @@ const fs = require('fs');
 const os = require('os');
 const { execSync } = require('child_process');
 
+const findCacheDir = require('find-cache-dir');
 const { createMacro, MacroError } = require('babel-plugin-macros');
 
-const ENV = process.env.BABEL_ENV || 'production';
-const PACKAGE_NAME =
-  ENV === 'test' ? path.resolve(__dirname, 'index.js') : 'rails-routes';
+const ROUTES_LIB_PATH =
+  process.env.BABEL_ENV === 'test'
+    ? path.resolve(__dirname, 'routes.js')
+    : 'rails.macro/routes.js';
+
+const CACHE_DIR = findCacheDir({ name: 'rails.macro' });
 
 // only run's `generateFn` to create a file if the modification time
 // of `outputFile` is less than that of `watchFile` (or `outputFile` DNE)
@@ -32,12 +36,12 @@ const memoGenerateFile = (watchFile, outputFile, generateFn, noCache) => {
 // We store all routes in the babel-loader process' memory.
 // If you update `routes.rb`, you must restart the dev server to see updates.
 let routes;
-const loadRoutes = (projectDir, noCache) => {
+const loadRoutes = (railsDir, noCache) => {
   if (routes) return;
 
   const rawJson = memoGenerateFile(
-    path.resolve(projectDir, 'config/routes.rb'),
-    path.resolve(projectDir, 'tmp/cache/routes_export.json'),
+    path.resolve(railsDir, 'config/routes.rb'),
+    path.resolve(CACHE_DIR, 'routes_export.json'),
     () => {
       console.log('Reloading rails routes...');
       try {
@@ -47,7 +51,7 @@ const loadRoutes = (projectDir, noCache) => {
             'get_routes.rb'
           )}`,
           {
-            cwd: projectDir,
+            cwd: railsDir,
           }
         )
           .toString()
@@ -71,8 +75,8 @@ const objSlice = (obj, keys) => {
 };
 
 module.exports = createMacro(
-  function routeMacro({ references, state, babel, config }) {
-    loadRoutes(state.cwd, config.cache === false);
+  function railsMacro({ references, state, babel, config = {} }) {
+    loadRoutes(config.railsDir || state.cwd, config.cache === false);
 
     const T = babel.types;
 
@@ -80,7 +84,11 @@ module.exports = createMacro(
 
     const routesToRegister = new Set();
 
-    for (const referencePath of references.default) {
+    for (const key in references) {
+      if (key !== 'Routes') throw new MacroError(`Unsupported module '${key}'`);
+    }
+
+    for (const referencePath of references.Routes || []) {
       // Sanity checks that the user is calling our method correctly
       if (
         !(
@@ -134,7 +142,10 @@ module.exports = createMacro(
     body.unshift(
       // Variable declaration for importing our route helper module
       // TODO: there's probably a better/faster way to insert source code here besides babel.template(...)() ?
-      babel.template(`const ${packageUid.name} = require('${PACKAGE_NAME}')`)(),
+      // TODO: what if the environment only supports ES modules?
+      babel.template(
+        `const ${packageUid.name} = require('${ROUTES_LIB_PATH}')`
+      )(),
 
       // We also need to call our helper method `registerRoutes` to initialize
       // each of the routes we use. This let's us declare a route's AST
@@ -148,5 +159,5 @@ module.exports = createMacro(
       })
     );
   },
-  { configName: 'railsRoutesMacro' }
+  { configName: 'railsMacro' }
 );

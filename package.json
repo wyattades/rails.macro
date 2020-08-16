@@ -1,17 +1,25 @@
 {
-  "name": "rails-routes-macro",
+  "name": "rails.macro",
   "keywords": [
-    "babel-plugin-macros",
     "rails",
+    "macro",
     "routes",
-    "macro"
+    "babel",
+    "babel-plugin-macros"
   ],
+  "author": {
+    "name": "Wyatt Ades"
+  },
   "license": "MIT",
+  "main": "macro.js",
   "scripts": {
     "test": "rm -rf test/fixtures/*/output.js && BABEL_ENV=test jest ./test/index.test.js && jest --testMatch '<rootDir>/test/fixtures/**/output.js'"
   },
   "peerDependencies": {
     "babel-plugin-macros": "^2.8.0"
+  },
+  "dependencies": {
+    "find-cache-dir": "^3.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.11.1",
