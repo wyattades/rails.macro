@@ -1,4 +1,4 @@
-import { Routes } from '../../../macro';
+const { Routes } = require('../../../macro');
 
 test('static path', () => {
   expect(Routes.things_path()).toBe('/things');

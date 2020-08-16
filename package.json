@@ -1,5 +1,6 @@
 {
   "name": "rails.macro",
+  "version": "0.1.0",
   "keywords": [
     "rails",
     "macro",
@@ -12,13 +13,19 @@
   },
   "license": "MIT",
   "main": "macro.js",
+  "files": [
+    "*.rb",
+    "*.js",
+    "*.d.ts"
+  ],
   "scripts": {
-    "test": "rm -rf test/fixtures/*/output.js && BABEL_ENV=test jest ./test/index.test.js && jest --testMatch '<rootDir>/test/fixtures/**/output.js'"
+    "test": "rm -rf test/fixtures/*/output.js && BABEL_ENV=test jest ./test/index.test.js --verbose && jest --testMatch '<rootDir>/test/fixtures/**/output.js'"
   },
   "peerDependencies": {
     "babel-plugin-macros": "^2.8.0"
   },
   "dependencies": {
+    "@babel/helper-module-imports": "^7.10.4",
     "find-cache-dir": "^3.3.1"
   },
   "devDependencies": {

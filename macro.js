@@ -5,6 +5,7 @@ const { execSync } = require('child_process');
 
 const findCacheDir = require('find-cache-dir');
 const { createMacro, MacroError } = require('babel-plugin-macros');
+const importsHelpers = require('@babel/helper-module-imports');
 
 const ROUTES_LIB_PATH =
   process.env.BABEL_ENV === 'test'
@@ -34,7 +35,7 @@ const memoGenerateFile = (watchFile, outputFile, generateFn, noCache) => {
 };
 
 // We store all routes in the babel-loader process' memory.
-// If you update `routes.rb`, you must restart the dev server to see updates.
+// TODO: implement file watching to rerun this automatically
 let routes;
 const loadRoutes = (railsDir, noCache) => {
   if (routes) return;
@@ -80,15 +81,27 @@ module.exports = createMacro(
 
     const T = babel.types;
 
-    let packageUid;
+    for (const key in references) {
+      if (key !== 'Routes')
+        throw new MacroError(
+          `Unsupported named import '${key}'. Only 'Routes' is available`
+        );
+    }
+
+    const routesReferences = references.Routes || [];
+    if (routesReferences.length === 0) return;
+
+    // Add a default import for our Routes helper module
+    const routesLibIdent = importsHelpers.addDefault(
+      routesReferences[0],
+      ROUTES_LIB_PATH,
+      { nameHint: 'RailsMacroRoutes' }
+    );
+    console.log(routesLibIdent);
 
     const routesToRegister = new Set();
 
-    for (const key in references) {
-      if (key !== 'Routes') throw new MacroError(`Unsupported module '${key}'`);
-    }
-
-    for (const referencePath of references.Routes || []) {
+    for (const referencePath of routesReferences) {
       // Sanity checks that the user is calling our method correctly
       if (
         !(
@@ -114,15 +127,12 @@ module.exports = createMacro(
       const [, routeName, urlType] = match;
 
       if (!(routeName in routes))
-        throw new MacroError(`Route not found: ${routeName}`);
-
-      if (!packageUid)
-        packageUid = referencePath.scope.generateUidIdentifier('Routes');
+        throw new MacroError(`Route name not found: ${routeName}`);
 
       // The code below performs the actual transformations
-      // e.g. Replace `Routes.my_thing_path({ some: 'params' })` with `Routes.getPath('my_thing', { some: 'params' })`
+      // e.g. Replace `Routes.my_thing_path({ some: 'params' })` with `RailsMacroRoutes.getPath('my_thing', { some: 'params' })`
 
-      referencePath.parentPath.get('object').replaceWith(packageUid);
+      referencePath.parentPath.get('object').replaceWith(routesLibIdent);
 
       referencePath.parentPath
         .get('property')
@@ -136,28 +146,21 @@ module.exports = createMacro(
 
     if (routesToRegister.size === 0) return;
 
-    // source file's body reference
-    const body = state.file.ast.program.body;
+    // We also need to call our helper method `registerRoutes` to initialize
+    // each of the routes we use. This let's us declare a route's AST
+    // once at the root of the source file so we aren't declaring a bunch
+    // of new objects every time we call .getPath or .getUrl
+    const registerRoutesNode = babel.template(
+      `MODULE.registerRoutes(ROUTES, { host: HOST });`
+    )({
+      MODULE: routesLibIdent,
+      ROUTES: T.valueToNode(objSlice(routes, routesToRegister)),
+      HOST: config.host ? T.stringLiteral(config.host) : T.nullLiteral(),
+    });
 
-    body.unshift(
-      // Variable declaration for importing our route helper module
-      // TODO: there's probably a better/faster way to insert source code here besides babel.template(...)() ?
-      // TODO: what if the environment only supports ES modules?
-      babel.template(
-        `const ${packageUid.name} = require('${ROUTES_LIB_PATH}')`
-      )(),
-
-      // We also need to call our helper method `registerRoutes` to initialize
-      // each of the routes we use. This let's us declare a route's AST
-      // once at the root of the source file so we aren't declaring a bunch
-      // of new objects every time we call .getPath or .getUrl
-      babel.template(
-        `${packageUid.name}.registerRoutes(ROUTES, { host: HOST });`
-      )({
-        ROUTES: T.valueToNode(objSlice(routes, [...routesToRegister])),
-        HOST: config.host ? T.stringLiteral(config.host) : T.nullLiteral(),
-      })
-    );
+    // add it to the top of the file
+    // NOTE: I think Babel is smart and puts it after the imports, but :shrug:
+    state.file.path.unshiftContainer('body', registerRoutesNode);
   },
   { configName: 'railsMacro' }
 );
