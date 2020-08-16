@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const pluginTester = require('babel-plugin-tester');
+
+const pluginTester = require('babel-plugin-tester').default;
 const babelPluginMacros = require('babel-plugin-macros');
 
 const testLines = (title, error, ...sources) =>
@@ -15,7 +16,7 @@ const testLines = (title, error, ...sources) =>
     error,
   }));
 
-pluginTester.default({
+pluginTester({
   plugin: babelPluginMacros,
   pluginOptions: {
     railsMacro: {
