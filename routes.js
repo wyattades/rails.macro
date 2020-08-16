@@ -3,17 +3,19 @@ const routes = {};
 
 let config = {};
 
-const encodeQuery = obj => {
+const encodeQuery = (obj) => {
   const parts = [];
   let i = 0;
   for (const key in obj)
     parts.push(
-      `${i++ === 0 ? '?' : '&'}${key}=${encodeURIComponent(obj[key])}`
+      `${i++ === 0 ? '?' : '&'}${encodeURIComponent(key)}=${encodeURIComponent(
+        obj[key]
+      )}`
     );
   return parts.join('');
 };
 
-const encodeBlob = blob => {
+const encodeBlob = (blob) => {
   if (blob[0] === '/') blob = blob.substring(1);
   if (blob[blob.length - 1] === '/') blob = blob.substring(0, blob.length - 1);
   return blob;
@@ -55,9 +57,15 @@ exports.registerRoutes = (nRoutes, nConfig) => {
 };
 
 exports.getPath = (name, params) => {
+  let anchor;
+
   if (params != null) {
-    if (typeof params === 'object') params = { ...params };
-    else params = { id: params };
+    if (typeof params === 'object') {
+      // ignore `host`, and use `anchor` for url hash/anchor
+      const { anchor: iAnchor, host: _, ...newParams } = params;
+      anchor = iAnchor;
+      params = newParams;
+    } else params = { id: params };
   } else params = {};
 
   const routeConfig = routes[name];
@@ -72,20 +80,21 @@ exports.getPath = (name, params) => {
     for (const paramName of usedParams) delete params[paramName];
   }
 
-  const anchor = params.anchor != null ? `#${params.anchor}` : '';
-  delete params.anchor;
-
   // leftover params are the query params
-  return `${pathname}${encodeQuery(params)}${anchor}`;
+  return `${pathname}${encodeQuery(params)}${
+    anchor != null ? `#${anchor}` : ''
+  }`;
 };
 
 exports.getUrl = (name, params) => {
   const urlHost =
-    config.host || (typeof window !== 'undefined' && window.location.origin);
+    (params && typeof params === 'object' && params.host) ||
+    config.host ||
+    (typeof window !== 'undefined' && window.location.origin);
 
   if (!urlHost)
     throw new Error(
-      'Cannot determine url host from config option `railsRoutesMacro.host` nor `window.location`'
+      "Cannot determine url `host` from this method's params, `railsMacro` config, nor `window.location`"
     );
 
   return urlHost + exports.getPath(name, params);

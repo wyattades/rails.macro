@@ -97,7 +97,6 @@ module.exports = createMacro(
       ROUTES_LIB_PATH,
       { nameHint: 'RailsMacroRoutes' }
     );
-    console.log(routesLibIdent);
 
     const routesToRegister = new Set();
 

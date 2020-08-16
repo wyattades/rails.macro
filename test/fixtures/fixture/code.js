@@ -6,6 +6,19 @@ test('static path', () => {
   expect(Routes.things_url()).toBe('http://example.com/things');
 });
 
+test('url anchors', () => {
+  expect(Routes.things_path({ anchor: 'hello' })).toBe('/things#hello');
+  expect(Routes.things_path({ anchor: '' })).toBe('/things#');
+  expect(Routes.things_path({ anchor: null })).toBe('/things');
+});
+
+test('custom host', () => {
+  expect(Routes.things_url({ host: 'http://fizzbuzz.com' })).toBe(
+    'http://fizzbuzz.com/things'
+  );
+  expect(Routes.things_path({ host: 'http://fizzbuzz.com' })).toBe('/things');
+});
+
 test('required parameters', () => {
   expect(Routes.thing_path({ id: 'wow', some: 'query' })).toBe(
     '/thing/wow?some=query'
