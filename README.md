@@ -1,6 +1,6 @@
 # rails.macro
 
-> Allow JavaScript code to access Rails route paths from `config/routes.rb`
+> Allow JavaScript code to access the Rails named routes in `config/routes.rb`
 
 ## Installation
 
@@ -56,9 +56,9 @@ There are a few ways to define the url host when using the `<routeName>_url` met
      some: 'query',
      host: 'http://example.com',
    });
-   // 'https://example.com/my_cool_thing/abc123?some=query'
+   // 'http://example.com/my_cool_thing/abc123?some=query'
    ```
-2. Provide a global `host` option in the the `railsMacro` [global config](#Config).
+2. Provide a global `host` option in the `railsMacro` [global config](#Config).
 3. As a fallback, `window.location.origin` is used if `window` is defined when the url method is called at runtime.
 
 If none of these options are available, an error is thrown when the url method is called at runtime.
@@ -77,19 +77,16 @@ You can configure `rails.macro` by providing options to the
 ```json
 {
   "plugins": [
-    [
-      "macros",
-      {
-        "railsMacro": {
-          // config goes here
-        }
+    ["macros", {
+      "railsMacro": {
+        ...
       }
-    ]
+    }]
   ]
 }
 ```
 
-### Options:
+### Config Options
 
 | Name     | Default         | Description                                                                        |
 | -------- | --------------- | ---------------------------------------------------------------------------------- |
@@ -99,7 +96,7 @@ You can configure `rails.macro` by providing options to the
 
 ## Re-evaluating on change
 
-For now, you must restart your build or dev-server if you change the routes in `config/routes.rb`. A `watch` option may be considered in the future
+For now, you must restart your dev-server if you change the Rails routes in `config/routes.rb`. A `watch` option may be considered in the future.
 
 ## License
 
