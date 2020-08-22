@@ -1,6 +1,6 @@
 {
   "name": "rails.macro",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "keywords": [
     "rails",
     "routes",
@@ -9,7 +9,11 @@
     "babel-plugin-macros"
   ],
   "author": {
-    "name": "Wyatt Ades"
+    "name": "wyattades"
+  },
+  "repository": {
+    "url": "https://github.com/wyattades/rails.macro",
+    "type": "git"
   },
   "license": "MIT",
   "main": "macro.js",

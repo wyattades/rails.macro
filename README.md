@@ -58,7 +58,7 @@ There are a few ways to define the url host when using the `<routeName>_url` met
    });
    // 'http://example.com/my_cool_thing/abc123?some=query'
    ```
-2. Provide a global `host` option in the `railsMacro` [global config](#Config).
+2. Provide a global `host` option in the `railsMacro` [global config](#config).
 3. As a fallback, `window.location.origin` is used if `window` is defined when the url method is called at runtime.
 
 If none of these options are available, an error is thrown when the url method is called at runtime.
