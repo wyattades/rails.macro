@@ -65,11 +65,11 @@ If none of these options are available, an error is thrown when the url method i
 
 ### More Examples
 
-[See Jest tests for in-depth examples](./test/index.test.js)
+[See Jest tests for in-depth examples](./test/fixtures/routes/code.js)
 
 ### How it works
 
-At build-time, your `config/routes.rb` file is parsed with `bundle exec rails runner [get_routes.rb](./get_routes.rb)`, and the route methods called in your JavaScript source code are transformed from:
+At build-time, your `config/routes.rb` file is parsed with <code>bundle exec rails runner [get_routes.rb](./get_routes.rb)</code>, and the route methods called in your JavaScript source code are transformed from:
 
 ```js
 import { Routes } from 'rails.macro';
