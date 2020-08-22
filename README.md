@@ -67,6 +67,31 @@ If none of these options are available, an error is thrown when the url method i
 
 [See Jest tests for in-depth examples](./test/index.test.js)
 
+### How it works
+
+At build-time, your `config/routes.rb` file is parsed with `bundle exec rails runner [get_routes.rb](./get_routes.rb)`, and the route methods called in your JavaScript source code are transformed from:
+
+```js
+import { Routes } from 'rails.macro';
+Routes.my_thing_path({ ...stuff });
+Routes.my_thing_url({ ...stuff });
+```
+
+to something like:
+
+```js
+import RailsMacroRoutes from 'rails.macro/routes';
+RailsMacroRoutes.registerRoutes({
+  my_thing: {
+    /* AST used to construct this route */
+  },
+});
+RailsMacroRoutes.getPath('my_thing', { ...stuff });
+RailsMacroRoutes.getUrl('my_thing', { ...stuff });
+```
+
+As you can see, only the route definitions needed in that specific file are provided in the resulting code. However, this means that if you use the same route in multiple files, that route definition code will be duplicated in each file.
+
 ## Config
 
 You can configure `rails.macro` by providing options to the
@@ -88,11 +113,19 @@ You can configure `rails.macro` by providing options to the
 
 ### Config Options
 
-| Name     | Default         | Description                                                                           |
-| -------- | --------------- | ------------------------------------------------------------------------------------- |
-| host     | `undefined`     | Default url host used by `Routes.<routeName>_url` methods e.g. https://example.com    |
-| railsDir | `process.cwd()` | Path to the rails project directory you want to read routes from                      |
-| cache    | `true`          | Cache the parsed `routes.rb` results in the filesystem to speed up consecutive builds |
+| Name            | Default Value          | Description                                                                                                       |
+| --------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| host            | `undefined`            | Default url host used by `Routes.<routeName>_url` methods e.g. https://example.com                                |
+| railsDir        | `process.cwd()`        | Path to the rails project directory you want to read routes from                                                  |
+| cache           | `true`                 | Cache the parsed `routes.rb` results in the filesystem to speed up consecutive builds                             |
+| watchFiles      | `['config/routes.rb']` | These files' modification times will be used to determine if we need to regenerate the routes when we start babel |
+| preparsedRoutes | `undefined`            | Path to a preparsed routes json file. [More info](#pre-parsing-rails-routes)                                      |
+
+## Pre-parsing Rails routes
+
+If you're using `thread-loader` with `babel-loader`, `rails.macro` will try to parse and cache `config/routes.rb` in each thread, which might lead to undesirable results.
+
+To avoid this, run `npx rails.macro preparse_routes > parsed_routes.json` before running babel/webpack, and set the config option `preparsedRoutes: './parsed_routes.json'`.
 
 ## Re-evaluating on change
 

@@ -7,25 +7,34 @@ const findCacheDir = require('find-cache-dir');
 const { createMacro, MacroError } = require('babel-plugin-macros');
 const importsHelpers = require('@babel/helper-module-imports');
 
+const PACKAGE_NAME = 'rails.macro';
+
 const ROUTES_LIB_PATH =
   process.env.BABEL_ENV === 'test'
     ? path.resolve(__dirname, 'routes.js')
-    : 'rails.macro/routes.js';
+    : `${PACKAGE_NAME}/routes.js`;
 
-const CACHE_DIR = findCacheDir({ name: 'rails.macro' });
+const info = (...args) => console.log(`> ${PACKAGE_NAME}:`, ...args);
 
-// only run's `generateFn` to create a file if the modification time
-// of `outputFile` is less than that of `watchFile` (or `outputFile` DNE)
-const memoGenerateFile = (watchFile, outputFile, generateFn, noCache) => {
-  if (noCache) return generateFn();
-
-  const inputStat = fs.statSync(watchFile);
-  let outputStat;
+const getMTime = (filePath) => {
   try {
-    outputStat = fs.statSync(outputFile);
-  } catch (_) {}
+    return fs.statSync(filePath).mtime;
+  } catch (_) {
+    return null;
+  }
+};
 
-  if (outputStat && inputStat.mtime < outputStat.mtime)
+// only run's `generateFn` to create a file if any of the modification times
+// of `watchFiles` are sooner than that of `outputFile`, or if `outputFile` DNE
+const memoGenerateFile = (watchFiles, outputFile, generateFn) => {
+  if (!watchFiles || watchFiles.length === 0 || !outputFile)
+    return generateFn();
+
+  const outputTime = getMTime(outputFile);
+  if (
+    outputTime &&
+    watchFiles.find((watchFile) => getMTime(watchFile) > outputTime)
+  )
     return fs.readFileSync(outputFile, 'utf8');
 
   const outputRaw = generateFn();
@@ -34,17 +43,44 @@ const memoGenerateFile = (watchFile, outputFile, generateFn, noCache) => {
   return outputRaw;
 };
 
-// We store all routes in the babel-loader process' memory.
-// TODO: implement file watching to rerun this automatically
-let routes;
-const loadRoutes = (railsDir, noCache) => {
-  if (routes) return;
+let cacheDir;
+const getCachePath = (filename) => {
+  if (!cacheDir) cacheDir = findCacheDir({ name: PACKAGE_NAME, create: true });
 
-  const rawJson = memoGenerateFile(
-    path.resolve(railsDir, 'config/routes.rb'),
-    path.resolve(CACHE_DIR, 'routes_export.json'),
-    () => {
-      console.log('Reloading rails routes...');
+  return path.resolve(cacheDir, filename);
+};
+
+const DEFAULT_WATCH_FILES = ['config/routes.rb'];
+
+const loadRoutes = (config, cwd) => {
+  let rawJson;
+
+  if (config.preparsedRoutes) {
+    const preparsedRoutes = path.resolve(cwd, config.preparsedRoutes);
+
+    try {
+      rawJson = fs.readFileSync(preparsedRoutes, 'utf8');
+    } catch (err) {
+      console.error(`Failed to load routes file ${preparsedRoutes}:`);
+      throw err;
+    }
+  } else {
+    const railsDir = config.railsDir || cwd;
+
+    const useCache = config.cache !== false;
+
+    // TODO: implement file watching for development to rerun parser automatically when `watchFiles` changes
+    const watchFiles =
+      useCache &&
+      (Array.isArray(config.watchFiles)
+        ? config.watchFiles
+        : DEFAULT_WATCH_FILES
+      ).map((watchFile) => path.resolve(railsDir, watchFile));
+
+    const cacheFile = useCache && getCachePath('routes_cache.json');
+
+    rawJson = memoGenerateFile(watchFiles, cacheFile, () => {
+      info('Reloading Rails routes...');
       try {
         return execSync(
           `bundle exec rails runner ${path.resolve(
@@ -61,12 +97,22 @@ const loadRoutes = (railsDir, noCache) => {
         console.error('Failed to load Rails routes!');
         throw err;
       }
-    },
-    noCache
-  );
+    });
+  }
 
-  routes = JSON.parse(rawJson);
-  console.log('Loaded rails routes.');
+  try {
+    const res = JSON.parse(rawJson);
+
+    if (res && typeof res === 'object') {
+      info('Loaded Rails routes.');
+      return res;
+    }
+
+    throw new Error('Failed to parse routes: Invalid JSON object');
+  } catch (err) {
+    console.error('Failed to parse routes:');
+    throw err;
+  }
 };
 
 const objSlice = (obj, keys) => {
@@ -75,9 +121,12 @@ const objSlice = (obj, keys) => {
   return sliced;
 };
 
+// We store all routes in the babel-loader process' memory.
+let routes;
+
 module.exports = createMacro(
   function railsMacro({ references, state, babel, config = {} }) {
-    loadRoutes(config.railsDir || state.cwd, config.cache === false);
+    if (!routes) routes = loadRoutes(config, state.cwd);
 
     const T = babel.types;
 

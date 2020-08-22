@@ -18,6 +18,7 @@
     "*.js",
     "*.d.ts"
   ],
+  "bin": "cli.js",
   "scripts": {
     "test": "rm -rf test/fixtures/*/output.js && BABEL_ENV=test jest ./test/index.test.js --verbose && jest --testMatch '<rootDir>/test/fixtures/**/output.js'"
   },
