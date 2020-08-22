@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "keywords": [
     "rails",
-    "macro",
     "routes",
+    "macro",
     "babel",
     "babel-plugin-macros"
   ],
@@ -19,6 +19,9 @@
     "*.d.ts"
   ],
   "bin": "cli.js",
+  "engines": {
+    "node": ">=8.0.0"
+  },
   "scripts": {
     "test": "rm -rf test/fixtures/*/output.js && BABEL_ENV=test jest ./test/index.test.js --verbose && jest --testMatch '<rootDir>/test/fixtures/**/output.js'"
   },
