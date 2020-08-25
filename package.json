@@ -1,6 +1,7 @@
 {
   "name": "rails.macro",
   "version": "0.1.1",
+  "description": "A babel macro to let JavaScript code access Ruby on Rails named routes",
   "keywords": [
     "rails",
     "routes",
@@ -18,6 +19,7 @@
   "license": "MIT",
   "main": "macro.js",
   "files": [
+    "lib",
     "*.rb",
     "*.js",
     "*.d.ts"
@@ -27,6 +29,7 @@
     "node": ">=8.0.0"
   },
   "scripts": {
+    "build": "rollup -i src/routes.js -o lib/routes.js --format cjs",
     "test": "rm -rf test/fixtures/*/output.js && BABEL_ENV=test jest ./test/index.test.js --verbose && jest --testMatch '<rootDir>/test/fixtures/**/output.js'"
   },
   "peerDependencies": {
@@ -34,13 +37,15 @@
   },
   "dependencies": {
     "@babel/helper-module-imports": "^7.10.4",
-    "find-cache-dir": "^3.3.1"
+    "find-cache-dir": "^3.3.1",
+    "qs": "^6.9.4"
   },
   "devDependencies": {
     "@babel/core": "^7.11.1",
     "@types/babel-plugin-macros": "^2.8.2",
     "babel-plugin-macros": "^2.8.0",
     "babel-plugin-tester": "^9.2.0",
-    "jest": "^26.4.0"
+    "jest": "^26.4.0",
+    "rollup": "^2.26.5"
   }
 }

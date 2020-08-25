@@ -1,6 +1,6 @@
 # rails.macro
 
-> Allow JavaScript code to access the Rails named routes in `config/routes.rb`
+> A babel macro to let JavaScript code access Ruby on Rails named routes
 
 ## Installation
 
@@ -65,6 +65,19 @@ If none of these options are available, an error is thrown when the url method i
 
 ### More Examples
 
+- `anchor` is a reserved parameter that appends a url hash
+  ```js
+  // Given Rails route definition: `get '/foo', as: :foo`
+  Rails.foo_path({ anchor: 'buzz', wow: 123 });
+  // Creates the string: /foo?wow=123#buzz
+  ```
+- You can also pass a string or number as the first argument if the route has an `:id` param
+  ```js
+  // Given Rails route definition: `get '/bar/:id', as: :bar`
+  Rails.bar_path('buzz');
+  // Creates the string: /bar/buzz
+  ```
+
 [See Jest tests for in-depth examples](./test/fixtures/routes/code.js)
 
 ### How it works
@@ -91,6 +104,8 @@ RailsMacroRoutes.getUrl('my_thing', { ...stuff });
 ```
 
 As you can see, only the route definitions needed in that specific file are provided in the resulting code. However, this means that if you use the same route in multiple files, that route definition code will be duplicated in each file.
+
+The [qs](https://github.com/ljharb/qs) lib is used to encode queries, and tries to replicate Rails' `to_query` as closely as possible.
 
 ## Config
 
@@ -132,6 +147,20 @@ To avoid this, run `npx rails.macro preparse_routes > parsed_routes.json` before
 For now, you must restart your dev-server if you change the Rails routes in `config/routes.rb`. A `watch` option may be considered in the future.
 
 ## Disclaimer
+
+This library doesn't implement all Rails features:
+
+- Route `constraints`. Unfortunately, this lib can't respect constraints since they allow `proc`s
+- Rails treats empty strings as valid values for named params, so they are not considered "missing" if the named param is required. Instead, this lib does treat empty strings as "missing" and may throw an error if the named param is required
+- Rails routes do special encoding on Hash/Array named params e.g.
+  ```ruby
+  # Route definition:
+  get 'foo/:bar', as: :foo
+  # Call this route with a Hash/Array for `bar`
+  foo_path(bar: ['bar', { foo: 'buzz', wow: 123 }])
+  # => /foo/bar%2Ffoo=buzz&wow=123
+  ```
+  This lib will instead ignored named params with Hash/Array values.
 
 This library has only been tested with Rails 6.0.3 and uses internal Rails APIs that are subject to change.
 

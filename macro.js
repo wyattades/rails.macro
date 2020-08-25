@@ -11,8 +11,8 @@ const PACKAGE_NAME = 'rails.macro';
 
 const ROUTES_LIB_PATH =
   process.env.BABEL_ENV === 'test'
-    ? path.resolve(__dirname, 'routes.js')
-    : `${PACKAGE_NAME}/routes.js`;
+    ? path.resolve(__dirname, 'lib/routes.js')
+    : `${PACKAGE_NAME}/lib/routes.js`;
 
 const info = (...args) => console.log(`> ${PACKAGE_NAME}:`, ...args);
 
@@ -141,7 +141,7 @@ module.exports = createMacro(
     if (routesReferences.length === 0) return;
 
     // Add a default import for our Routes helper module
-    const routesLibIdent = importsHelpers.addDefault(
+    const routesLibIdent = importsHelpers.addNamespace(
       routesReferences[0],
       ROUTES_LIB_PATH,
       { nameHint: 'RailsMacroRoutes' }
