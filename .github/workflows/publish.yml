@@ -1,0 +1,39 @@
+name: Build & Deploy Storybook
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.0
+        with:
+          node-version: '10.12.1'
+
+      - name: Install npm packages
+        run: yarn install --frozen-lockfile --production=false
+
+      - name: Setup Ruby
+        uses: actions/setup-node@v2.1.0
+        with:
+          node-version: '10.12.1'
+
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.6.6'
+
+      - name: Install Rails dependencies
+        working-directory: ./test/server
+        run: |
+          gem install bundler
+          bundle install -j$(nproc)
+
+      - name: Run tests
+        run: yarn test
